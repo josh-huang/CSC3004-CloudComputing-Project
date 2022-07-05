@@ -10,32 +10,22 @@ from sense_hat import SenseHat
 from time import sleep
 import json
 import mysql.connector as connection
+import speedtest
+import psutil
 
 sense = SenseHat()
 sense.clear()
 
-# mqtt subscribe topic
-def on_connect(client, userdata, flags, rc):
-    client.subscribe("CSC3004/Temperature")
 
-
-# mqtt client receive message
-def on_message(client, userdata, msg):
-    temp = sense.get_temperature()
-    humidity = sense.get_humidity()
-
-    payload = json.loads(msg.payload)
-    download = payload["downloadSpeed"]
-    upload = payload["uploadSpeed"]
-    cpu_usage = payload["cpuUsage"]
-    ram_usage = payload["ramUsage"]
-
-    database_connection(cpu_usage, ram_usage, download, upload, temp, humidity)
+def bytes_to_mb(bytes):
+    KB = 1024  # One Kilobyte is 1024 bytes
+    MB = KB * 1024  # One MB is 1024 KB
+    return bytes / MB
 
 
 def database_connection(cpu, ram, download, upload, temp, humid):
     mydb = connection.connect(  # connection to database
-        host="18.143.63.224",
+        host="54.179.115.76",
         database="sensor",
         user="staff",
         passwd="password",
@@ -44,14 +34,27 @@ def database_connection(cpu, ram, download, upload, temp, humid):
     mycursor = mydb.cursor()
     sql = "INSERT INTO SensorData (CPUUsage, RAMUsage, DownloadSpeed, UploadSpeed, Temperature, Humidity) VALUES (%s, %s, %s, %s, %s, %s)"
 
-    val = (0.5, 1, 0, 0.5, 1, 0)
+    val = (cpu, ram, download, upload, temp, humid)
     mycursor.execute(sql, val)
     mydb.commit()
 
 
-# mqtt client connection
-client = mqtt.Client()
-client.on_connect = on_connect
-client.on_message = on_message
-client.connect("test.mosquitto.org", 1883, 60)
-client.loop_forever()
+def getMeasurement():
+    temp = sense.get_temperature()
+    print(temp)
+    humidity = sense.get_humidity()
+    print(humidity)
+
+    speed_test = speedtest.Speedtest()
+    download = bytes_to_mb(speed_test.download())
+    upload = bytes_to_mb(speed_test.upload())
+    print(upload)
+    cpu_usage = psutil.cpu_percent()
+    ram_usage = psutil.virtual_memory().percent
+
+    database_connection(cpu_usage, ram_usage, download, upload, temp, humidity)
+
+    print("Data has been recorded in database.")
+
+
+getMeasurement()
