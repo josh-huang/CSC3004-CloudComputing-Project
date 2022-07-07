@@ -3,7 +3,7 @@ import mysql.connector as connection
 
 def connect_database(cpu, ram, download, upload, temp, humid):
     mydb = connection.connect(
-        host="18.143.63.224",
+        host="54.179.115.76",
         database="sensor",
         user="staff",
         passwd="password",
@@ -20,11 +20,14 @@ def connect_database(cpu, ram, download, upload, temp, humid):
 
 def main():
     cpu = input("Enter the cpu usage: \n")
-    ram = input("Enter the cpu usage: \n")
-    download = input("Enter the cpu usage: \n")
-    upload = input("Enter the cpu usage: \n")
-    temp = input("Enter the cpu usage: \n")
-    humid = input("Enter the cpu usage: \n")
+    ram = input("Enter the ram usage: \n")
+    download = input("Enter the download speed: \n")
+    upload = input("Enter the upload speed: \n")
+    temp = input("Enter the temperature: \n")
+    humid = input("Enter the humidity: \n")
 
     connect_database(cpu, ram, download, upload, temp, humid)
     print("Data has been recorded in database.")
+
+
+main()
